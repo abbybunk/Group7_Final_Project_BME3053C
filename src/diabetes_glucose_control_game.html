@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diabetes Glucose Control Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a1a2e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            background: #16213e;
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 900px;
+            width: 100%;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #e0e0ff;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        
+        .game-area {
+            background: #0f0f1a;
+            border-radius: 8px;
+            padding: 40px 30px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .glucose-display {
+            font-size: 5em;
+            font-weight: bold;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .glucose-safe {
+            color: #4dff4d;
+        }
+        
+        .glucose-caution {
+            color: #ffcc00;
+        }
+        
+        .glucose-danger {
+            color: #ff4d4d;
+        }
+        
+        .unit {
+            font-size: 1.2em;
+            color: #b3b3d9;
+            margin-bottom: 20px;
+        }
+        
+        .safe-range {
+            color: #8080b3;
+            font-size: 1.1em;
+            margin: 20px 0;
+        }
+        
+        .timer {
+            font-size: 1.5em;
+            color: #e0e0ff;
+            margin: 20px 0;
+        }
+        
+        .status {
+            font-size: 1.2em;
+            color: #ffb3b3;
+            margin: 15px 0;
+            min-height: 30px;
+        }
+        
+        .action-display {
+            font-size: 1.3em;
+            color: #ffff99;
+            margin: 15px 0;
+            min-height: 30px;
+            font-weight: bold;
+        }
+        
+        .instructions {
+            color: #9999b3;
+            font-size: 1em;
+            margin: 25px 0;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .control-btn {
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border: 2px solid #6666ff;
+            background: transparent;
+            color: #6666ff;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            min-width: 120px;
+        }
+        
+        .control-btn:hover {
+            background: #6666ff;
+            color: #0f0f1a;
+            transform: scale(1.05);
+        }
+        
+        .control-btn.active {
+            background: #6666ff;
+            color: #0f0f1a;
+        }
+        
+        .end-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .end-screen.show {
+            display: flex;
+        }
+        
+        .end-screen-content {
+            background: #16213e;
+            padding: 50px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 500px;
+        }
+        
+        .win-screen {
+            color: #4dff4d;
+        }
+        
+        .lose-screen {
+            color: #ff4d4d;
+        }
+        
+        .end-title {
+            font-size: 3em;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        
+        .end-message {
+            font-size: 1.2em;
+            margin: 15px 0;
+            color: #e0e0ff;
+        }
+        
+        .restart-btn {
+            margin-top: 25px;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            background: #6666ff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .restart-btn:hover {
+            background: #7777ff;
+            transform: scale(1.05);
+        }
+        
+        .info {
+            color: #b3b3d9;
+            font-size: 0.95em;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🩺 Diabetes Glucose Control Game</h1>
+        
+        <div class="game-area">
+            <div class="glucose-display" id="glucoseDisplay">120</div>
+            <div class="unit">mg/dL</div>
+            
+            <div class="safe-range">Safe Range: 70 - 150 mg/dL</div>
+            
+            <div class="timer" id="timerDisplay">Time: 0.0 / 30 seconds</div>
+            
+            <div class="action-display" id="actionDisplay"></div>
+            
+            <div class="status" id="statusDisplay"></div>
+            
+            <div class="instructions">
+                Press buttons below or use A, S, D keys
+            </div>
+            
+            <div class="controls">
+                <button class="control-btn" id="insulinBtn" onclick="applyAction('insulin')">A - Insulin</button>
+                <button class="control-btn" id="snackBtn" onclick="applyAction('snack')">S - Snack</button>
+                <button class="control-btn" id="nothingBtn" onclick="applyAction('nothing')">D - Nothing</button>
+            </div>
+            
+            <div class="info">
+                <p><strong>Insulin:</strong> -25 mg/dL | <strong>Snack:</strong> +35 mg/dL | <strong>Nothing:</strong> Natural metabolism</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="end-screen" id="endScreen">
+        <div class="end-screen-content" id="endScreenContent">
+            <div class="end-title" id="endTitle"></div>
+            <div class="end-message" id="endMessage"></div>
+            <div class="end-message" id="endStats"></div>
+            <button class="restart-btn" onclick="restartGame()">Play Again (R)</button>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let gameState = "playing"; // "playing", "win", "lose"
+        let gameTime = 0;
+        let glucose = 120;
+        let lastUpdateTime = Date.now();
+        let actionCooldown = 0;
+        let actionDisplayTime = 0;
+        let lastAction = "";
+        
+        // Game parameters
+        const minGlucose = 70;
+        const maxGlucose = 150;
+        const dangerLow = 60;
+        const dangerHigh = 300;
+        const targetTime = 30;
+        const insulinEffect = -25;
+        const snackEffect = 35;
+        const metabolicDrift = -2;
+        const randomVariation = 8;
+        const actionCooldownMax = 0.5;
+        const updateInterval = 0.5;
+        
+        let lastGlucoseUpdateTime = 0;
+        
+        function updateGlucose() {
+            const random = Math.random() * randomVariation * 2 - randomVariation;
+            glucose = glucose + metabolicDrift + random;
+            glucose = Math.max(0, glucose);
+        }
+        
+        function applyAction(action) {
+            if (gameState !== "playing" || actionCooldown > 0) return;
+            
+            if (action === "insulin") {
+                glucose = glucose + insulinEffect;
+                lastAction = "💉 Insulin given";
+            } else if (action === "snack") {
+                glucose = glucose + snackEffect;
+                lastAction = "🍎 Snack given";
+            } else {
+                lastAction = "⏸ No action";
+            }
+            
+            actionCooldown = actionCooldownMax;
+            glucose = Math.max(0, glucose);
+            actionDisplayTime = 1.5;
+        }
+        
+        function updateGlucoseColor() {
+            const display = document.getElementById("glucoseDisplay");
+            display.textContent = Math.round(glucose);
+            
+            if (glucose < minGlucose || glucose > maxGlucose) {
+                display.className = "glucose-display glucose-danger";
+            } else if (glucose < 80 || glucose > 140) {
+                display.className = "glucose-display glucose-caution";
+            } else {
+                display.className = "glucose-display glucose-safe";
+            }
+        }
+        
+        function updateDisplay() {
+            const now = Date.now();
+            const dt = (now - lastUpdateTime) / 1000;
+            lastUpdateTime = now;
+            
+            if (gameState === "playing") {
+                gameTime += dt;
+                actionCooldown = Math.max(0, actionCooldown - dt);
+                actionDisplayTime = Math.max(0, actionDisplayTime - dt);
+                lastGlucoseUpdateTime += dt;
+                
+                // Update glucose every 0.5 seconds
+                if (lastGlucoseUpdateTime >= updateInterval) {
+                    updateGlucose();
+                    lastGlucoseUpdateTime = 0;
+                }
+                
+                // Check win condition
+                if (gameTime >= targetTime) {
+                    endGame("win");
+                }
+                
+                // Check lose conditions
+                if (glucose < dangerLow || glucose > dangerHigh) {
+                    endGame("lose");
+                }
+            }
+            
+            // Update UI
+            updateGlucoseColor();
+            document.getElementById("timerDisplay").textContent = 
+                `Time: ${gameTime.toFixed(1)} / ${targetTime} seconds`;
+            
+            if (actionDisplayTime > 0) {
+                document.getElementById("actionDisplay").textContent = lastAction;
+            } else {
+                document.getElementById("actionDisplay").textContent = "";
+            }
+            
+            // Status messages
+            let statusText = "";
+            if (gameState === "playing") {
+                if (glucose < minGlucose) {
+                    statusText = "⚠️ WARNING: Glucose too low!";
+                } else if (glucose > maxGlucose) {
+                    statusText = "⚠️ WARNING: Glucose too high!";
+                }
+            }
+            document.getElementById("statusDisplay").textContent = statusText;
+            
+            requestAnimationFrame(updateDisplay);
+        }
+        
+        function endGame(result) {
+            gameState = result;
+            const endScreen = document.getElementById("endScreen");
+            const endTitle = document.getElementById("endTitle");
+            const endMessage = document.getElementById("endMessage");
+            const endStats = document.getElementById("endStats");
+            const endScreenContent = document.getElementById("endScreenContent");
+            
+            endScreen.classList.add("show");
+            
+            if (result === "win") {
+                endScreenContent.className = "end-screen-content win-screen";
+                endTitle.textContent = "🎉 YOU WIN! 🎉";
+                endMessage.textContent = "You maintained safe glucose control for 30 seconds!";
+                endStats.textContent = `Final glucose: ${Math.round(glucose)} mg/dL`;
+            } else {
+                endScreenContent.className = "end-screen-content lose-screen";
+                endTitle.textContent = "💔 GAME OVER 💔";
+                if (glucose < dangerLow) {
+                    endMessage.textContent = "Hypoglycemia! Glucose dropped below 60 mg/dL";
+                } else {
+                    endMessage.textContent = "Hyperglycemia! Glucose exceeded 300 mg/dL";
+                }
+                endStats.textContent = `Time survived: ${gameTime.toFixed(1)} seconds | Final glucose: ${Math.round(glucose)} mg/dL`;
+            }
+        }
+        
+        function restartGame() {
+            gameState = "playing";
+            gameTime = 0;
+            glucose = 120;
+            lastUpdateTime = Date.now();
+            actionCooldown = 0;
+            actionDisplayTime = 0;
+            lastAction = "";
+            lastGlucoseUpdateTime = 0;
+            
+            document.getElementById("endScreen").classList.remove("show");
+            updateDisplay();
+        }
+        
+        // Keyboard controls
+        document.addEventListener("keydown", (e) => {
+            if (gameState === "playing") {
+                if (e.key.toLowerCase() === "a") applyAction("insulin");
+                else if (e.key.toLowerCase() === "s") applyAction("snack");
+                else if (e.key.toLowerCase() === "d") applyAction("nothing");
+            } else if (e.key.toLowerCase() === "r") {
+                restartGame();
+            }
+        });
+        
+        // Start the game
+        updateDisplay();
+    </script>
+</body>
+</html>
